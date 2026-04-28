@@ -1,8 +1,6 @@
 # TrustWork X 🌌
 
-![TrustWork X Banner](./assets/banner-placeholder.png) <!-- Replace with your actual banner if you have one -->
-
-**The Future of Work is On-Chain.**
+![TrustWork X Landing Page](./ui/Home.png)
 
 TrustWork X is a decentralized freelance marketplace that combines the security of **Web3 Smart Contracts** with the intelligence of **AI**. It eliminates the uncertainty of freelancing by verifying skills via AI, issuing Soulbound Reputation Passports, and protecting payments with an AI-mediated escrow system.
 
@@ -10,20 +8,23 @@ Built for **HackIndia Spark 7**.
 
 ---
 
-## 📸 UI Snapshots
+## 📸 Platform Interface
 
-*Add your UI screenshots here to showcase the beautiful cinematic design!*
+### The Job Board
+Browse AI-generated, verified job listings and apply using your Soulbound Reputation Passport.
+![Job Board](./ui/Job%20board.png)
 
-### Landing Page
-![Landing Page](./assets/landing-placeholder.png)
+### Secure AI Escrow
+Client funds are locked securely on-chain with AI-driven dispute arbitration.
+![Escrow System](./ui/Escrow.png)
 
-### Client Job Dashboard
-![Job Dashboard](./assets/job-dashboard-placeholder.png)
+### Profile & Reputation Management
+View your minted skills and manage your decentralized identity.
+![Profile](./ui/Profile.png)
 
-### AI Skill Verification & Reputation Orb
-![Reputation Orb](./assets/reputation-orb-placeholder.png)
-
-*(Note: Replace the image paths above with the actual snapshots of your UI!)*
+### Seamless Application Flow
+Apply to high-quality jobs directly with your verified on-chain score.
+![Apply Flow](./ui/Apply.png)
 
 ---
 
