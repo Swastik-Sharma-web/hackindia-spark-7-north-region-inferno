@@ -26,6 +26,14 @@ View your minted skills and manage your decentralized identity.
 Apply to high-quality jobs directly with your verified on-chain score.
 ![Apply Flow](./ui/Apply.png)
 
+### Interactive Dashboard
+Switch seamlessly between managing your freelance jobs and client escrow contracts.
+#### Freelancer View
+![Freelancer Dashboard](./ui/Freelancer%20View.png)
+
+#### Client View
+![Client Dashboard](./ui/Client%20View.png)
+
 ---
 
 ## 🚀 Key Features
