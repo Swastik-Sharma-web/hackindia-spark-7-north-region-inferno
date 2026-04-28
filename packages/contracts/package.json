@@ -1,0 +1,16 @@
+{
+  "name": "@trustwork/contracts",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.ts --network polygonMumbai",
+    "deploy:verify": "hardhat etherscan-verify --network polygonMumbai"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.2.0",
+    "hardhat": "^2.24.1",
+    "typescript": "^5.8.3"
+  }
+}
