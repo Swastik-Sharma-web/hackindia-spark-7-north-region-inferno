@@ -3,81 +3,57 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getStoredUserScore } from '@/lib/score-store';
-import { useJobs } from '@/lib/api-hooks';
+import { useJobs, useDashboardActions } from '@/lib/api-hooks';
+import { useAccount } from 'wagmi';
 
-const jobs = [
-  {
-    id: 1,
-    title: 'Build onboarding dashboard',
-    skill: 'React',
-    budget: '2.5 MATIC',
-    score: '80+',
-    description: 'Create a responsive onboarding dashboard for new freelancers with profile setup, skill verification, and wallet connection.',
-    details: [
-      'Responsive design for mobile and desktop',
-      'Multi-step form with validation',
-      'Integration with wallet connection',
-      'Real-time skill status updates',
-      'Beautiful animations and transitions'
-    ],
-    timeline: '2 weeks'
-  },
-  {
-    id: 2,
-    title: 'Audit escrow contract flow',
-    skill: 'Solidity',
-    budget: '4.0 MATIC',
-    score: '90+',
-    description: 'Review and audit the smart contract escrow flow for security vulnerabilities, gas optimization, and best practices.',
-    details: [
-      'Security audit with detailed report',
-      'Gas optimization suggestions',
-      'Reentrancy protection review',
-      'Edge case testing',
-      'Recommendations for improvements'
-    ],
-    timeline: '1 week'
-  },
-  {
-    id: 3,
-    title: 'Design reputation passport UI',
-    skill: 'UI/UX',
-    budget: '1.8 MATIC',
-    score: '75+',
-    description: 'Design an elegant and intuitive UI for the reputation passport NFT display and management interface.',
-    details: [
-      'Figma design mockups',
-      'Responsive component library',
-      'Dark mode optimization',
-      'Animation guidelines',
-      'Accessibility compliance'
-    ],
-    timeline: '1.5 weeks'
-  }
-];
 
-type CombinedJob = typeof jobs[0] | Job;
 
 export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
-  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+  const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [userScore, setUserScore] = useState(0);
-  const { jobs: dbJobs, loading: jobsLoading } = useJobs();
-  const [allJobs, setAllJobs] = useState<CombinedJob[]>(jobs);
+  const { jobs: dbJobs, loading: jobsLoading, fetchJobs } = useJobs();
+  const { applyForJob } = useDashboardActions();
+  const { address } = useAccount();
+  const [allJobs, setAllJobs] = useState<any[]>([]);
 
   useEffect(() => {
     setUserScore(getStoredUserScore());
   }, []);
 
   useEffect(() => {
-    // Merge DB jobs with static featured jobs
-    setAllJobs([...dbJobs, ...jobs]);
+    // Show only DB jobs
+    setAllJobs(dbJobs);
   }, [dbJobs]);
 
-  const handleApply = (jobId: number) => {
-    if (!appliedJobs.includes(jobId)) {
-      setAppliedJobs([...appliedJobs, jobId]);
-      alert('✓ Application submitted with your Reputation Passport!');
+  const fallbackAddress = '0xDemoFreelancer0987654321';
+  const effectiveAddress = address || fallbackAddress;
+
+  const isApplied = (job: any) => {
+    if (appliedJobs.includes(String(job.id))) return true;
+    if (job.freelancer?.wallet === effectiveAddress) return true;
+    return false;
+  };
+
+  const isClaimedByOther = (job: any) => {
+    if (job.status === 'OPEN') return false;
+    return !isApplied(job);
+  };
+
+  const handleApply = async (jobId: string | number) => {
+    if (!isApplied({ id: jobId })) {
+      try {
+        if (typeof jobId === 'string') {
+          // It's a DB job
+          await applyForJob(jobId, effectiveAddress);
+          await fetchJobs(); // Refresh DB jobs to show it's no longer OPEN
+        }
+        setAppliedJobs([...appliedJobs, String(jobId)]);
+        alert('✓ Application submitted with your Reputation Passport!');
+        setSelectedJob(null);
+      } catch (err) {
+        alert('Failed to apply. Make sure you are connected.');
+      }
     }
   };
 
@@ -121,10 +97,13 @@ export default function JobsPage() {
                 <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-slate-300">
                   <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1">{job.budget}</span>
                   <span className="rounded-full border border-violet-400/20 bg-violet-400/10 px-3 py-1">{job.score}</span>
-                  {appliedJobs.includes(job.id) && (
+                  {isApplied(job) && (
                     <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-emerald-300">Applied ✓</span>
                   )}
-                  {'escrowStatus' in job && job.escrowStatus === 'locked' && (
+                  {isClaimedByOther(job) && (
+                    <span className="rounded-full border border-slate-400/30 bg-slate-400/10 px-3 py-1 text-slate-300">Claimed</span>
+                  )}
+                  {'escrowStatus' in job && job.escrowStatus === 'LOCKED' && (
                     <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-emerald-300">🔒 Escrow</span>
                   )}
                 </div>
@@ -174,17 +153,21 @@ export default function JobsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => handleApply(selectedJob.id)}
-                disabled={appliedJobs.includes(selectedJob.id) || userScore < parseInt(selectedJob.score)}
+                disabled={isApplied(selectedJob) || isClaimedByOther(selectedJob) || userScore < parseInt(selectedJob.score)}
                 className={`flex-1 rounded-full px-6 py-3 font-medium transition-all ${
-                  appliedJobs.includes(selectedJob.id)
+                  isApplied(selectedJob)
                     ? 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+                    : isClaimedByOther(selectedJob)
+                    ? 'border border-slate-400/30 bg-slate-400/10 text-slate-300 cursor-not-allowed'
                     : userScore < parseInt(selectedJob.score)
                     ? 'border border-red-400/30 bg-red-400/10 text-red-300 cursor-not-allowed'
                     : 'bg-gradient-to-r from-violet-600 to-cyan-500 text-white hover:shadow-glow'
                 }`}
               >
-                {appliedJobs.includes(selectedJob.id)
+                {isApplied(selectedJob)
                   ? '✓ Applied with Passport'
+                  : isClaimedByOther(selectedJob)
+                  ? 'Claimed by Another'
                   : userScore < parseInt(selectedJob.score)
                   ? `Requires Score ${selectedJob.score}`
                   : 'Apply with Passport'}

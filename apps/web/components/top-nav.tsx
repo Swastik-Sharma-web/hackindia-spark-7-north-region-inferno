@@ -14,6 +14,7 @@ export function TopNav() {
           <Link href="/challenge">Challenge</Link>
           <Link href="/jobs">Jobs</Link>
           <Link href="/escrow">Escrow</Link>
+          <Link href="/dashboard" className="text-cyan-400 font-medium">Dashboard</Link>
           <Link href="/profile">Profile</Link>
           <div className="ml-2 border-l border-white/10 pl-4">
             <GoogleSignInButton />

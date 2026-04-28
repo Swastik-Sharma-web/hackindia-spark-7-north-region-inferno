@@ -46,32 +46,32 @@ jobsRouter.post('/generate', async (req, res) => {
     const result = await callGoogleStudioJobGen(parsed.data.prompt, parsed.data.apiKey);
     
     let dbJob = null;
-    if (parsed.data.wallet) {
-      try {
-        const user = await prisma.user.upsert({
-          where: { wallet: parsed.data.wallet },
-          update: {},
-          create: { wallet: parsed.data.wallet }
-        });
-        
-        dbJob = await prisma.job.create({
-          data: {
-            title: result.title,
-            skill: result.skill,
-            budget: result.budget,
-            score: result.score,
-            description: result.description,
-            details: result.details,
-            timeline: result.timeline,
-            clientId: user.id,
-            status: 'OPEN',
-            escrowStatus: 'LOCKED'
-          }
-        });
-        console.log(`[jobs] Saved job to DB: ${dbJob.id}`);
-      } catch (dbError) {
-        console.error('[jobs] Failed to save job to DB:', dbError);
-      }
+    const walletAddress = parsed.data.wallet || '0xDemoWallet1234567890'; // Fallback for demo
+    
+    try {
+      const user = await prisma.user.upsert({
+        where: { wallet: walletAddress },
+        update: {},
+        create: { wallet: walletAddress }
+      });
+      
+      dbJob = await prisma.job.create({
+        data: {
+          title: result.title,
+          skill: result.skill,
+          budget: result.budget,
+          score: result.score,
+          description: result.description,
+          details: result.details,
+          timeline: result.timeline,
+          clientId: user.id,
+          status: 'OPEN',
+          escrowStatus: 'LOCKED'
+        }
+      });
+      console.log(`[jobs] Saved job to DB: ${dbJob.id}`);
+    } catch (dbError) {
+      console.error('[jobs] Failed to save job to DB:', dbError);
     }
 
     return res.json({ ok: true, result, dbId: dbJob?.id });
@@ -89,10 +89,120 @@ jobsRouter.get('/', async (req, res) => {
   try {
     const jobs = await prisma.job.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { client: true }
+      include: { client: true, freelancer: true }
     });
     return res.json({ ok: true, jobs });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to fetch jobs' });
+  }
+});
+
+// PATCH: Apply to a job
+jobsRouter.patch('/:id/apply', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { wallet } = req.body;
+    
+    if (!wallet) return res.status(400).json({ error: 'Wallet is required' });
+    
+    // Find or create user
+    const user = await prisma.user.upsert({
+      where: { wallet },
+      update: {},
+      create: { wallet }
+    });
+
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        freelancerId: user.id,
+        status: 'IN_PROGRESS'
+      }
+    });
+    
+    return res.json({ ok: true, job });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to apply to job' });
+  }
+});
+
+// PATCH: Submit work
+jobsRouter.patch('/:id/submit', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { submittedWork } = req.body;
+    
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        submittedWork,
+        status: 'SUBMITTED'
+      }
+    });
+    
+    return res.json({ ok: true, job });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to submit work' });
+  }
+});
+
+// PATCH: Approve work
+jobsRouter.patch('/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        status: 'RELEASED',
+        escrowStatus: 'RELEASED'
+      }
+    });
+    
+    return res.json({ ok: true, job });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to approve work' });
+  }
+});
+
+// PATCH: Dispute
+jobsRouter.patch('/:id/dispute', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        status: 'DISPUTED',
+        disputeReason: reason
+      }
+    });
+    
+    return res.json({ ok: true, job });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to raise dispute' });
+  }
+});
+
+// DELETE: Delete a job
+jobsRouter.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = await prisma.job.findUnique({ where: { id } });
+    if (!job) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+    
+    if (job.status !== 'OPEN') {
+      return res.status(400).json({ error: 'Cannot delete a job that has already been accepted or is in progress' });
+    }
+    
+    await prisma.job.delete({ where: { id } });
+    
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to delete job' });
   }
 });

@@ -234,3 +234,99 @@ export function useJobGenerator() {
 
   return { generateJob, loading, error };
 }
+
+export function useDashboardActions() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const applyForJob = async (jobId: string, wallet: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/apply`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ wallet })
+      });
+      if (!response.ok) throw new Error('Failed to apply to job');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitWork = async (jobId: string, submittedWork: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/submit`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ submittedWork })
+      });
+      if (!response.ok) throw new Error('Failed to submit work');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approveWork = async (jobId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/approve`, {
+        method: 'PATCH'
+      });
+      if (!response.ok) throw new Error('Failed to approve work');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const dashboardDispute = async (jobId: string, reason: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}/dispute`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ reason })
+      });
+      if (!response.ok) throw new Error('Failed to raise dispute');
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteJob = async (jobId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to delete job');
+      }
+      return await response.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { applyForJob, submitWork, approveWork, dashboardDispute, deleteJob, loading, error };
+}

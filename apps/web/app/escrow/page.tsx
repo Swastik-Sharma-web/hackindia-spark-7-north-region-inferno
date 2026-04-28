@@ -2,16 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useEscrowDispute } from '@/lib/api-hooks';
-
-const activeJobs = [
-  { id: 101, title: 'Build onboarding dashboard', status: 'Finished', paymentStatus: 'Due', amount: '2.5 MATIC', description: 'Dashboard is completed but client has not released the final payment milestone.' },
-  { id: 102, title: 'Design reputation passport UI', status: 'In Progress', paymentStatus: 'Locked', amount: '1.8 MATIC', description: 'Currently working on the dark mode designs.' },
-  { id: 103, title: 'Smart Contract Audit', status: 'Finished', paymentStatus: 'Paid', amount: '4.0 MATIC', description: 'Audit completed and funds successfully released.' }
-];
+import { useEscrowDispute, useJobs } from '@/lib/api-hooks';
 
 export default function EscrowPage() {
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const { jobs } = useJobs();
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isDisputing, setIsDisputing] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -22,7 +17,7 @@ export default function EscrowPage() {
     await raiseDispute(`Job ID: ${selectedJobId} - ${disputeReason}`, selectedJobId, apiKey);
   };
 
-  const selectedJob = activeJobs.find(j => j.id === selectedJobId);
+  const selectedJob = jobs.find((j: any) => j.id === selectedJobId);
 
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-6 py-12 text-white">
@@ -41,7 +36,7 @@ export default function EscrowPage() {
           <h2 className="text-2xl font-semibold">Your Active Contracts</h2>
           <p className="mt-2 text-sm text-slate-400">Manage your ongoing and completed freelance jobs.</p>
           <div className="mt-5 space-y-3">
-            {activeJobs.map((job) => (
+            {jobs.map((job: any) => (
               <div 
                 key={job.id} 
                 onClick={() => {
@@ -56,16 +51,16 @@ export default function EscrowPage() {
               >
                 <div>
                   <p className="font-medium text-slate-200">{job.title}</p>
-                  <p className="text-sm text-slate-400">{job.amount}</p>
+                  <p className="text-sm text-slate-400">{job.budget}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] ${
-                    job.status === 'Finished' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+                    job.status === 'SUBMITTED' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : 'border-amber-400/20 bg-amber-400/10 text-amber-300'
                   }`}>
                     {job.status}
                   </span>
-                  <span className={`text-xs uppercase tracking-[0.1em] ${job.paymentStatus === 'Due' ? 'text-red-400' : job.paymentStatus === 'Paid' ? 'text-emerald-400' : 'text-slate-400'}`}>
-                    Payment: {job.paymentStatus}
+                  <span className={`text-xs uppercase tracking-[0.1em] ${job.escrowStatus === 'LOCKED' ? 'text-red-400' : job.escrowStatus === 'RELEASED' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                    Payment: {job.escrowStatus}
                   </span>
                 </div>
               </div>
@@ -82,17 +77,17 @@ export default function EscrowPage() {
               <div className="mt-6 flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/60 p-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Total Escrow</p>
-                  <p className="mt-1 text-lg font-bold text-cyan-300">{selectedJob.amount}</p>
+                  <p className="mt-1 text-lg font-bold text-cyan-300">{selectedJob.budget}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Status</p>
-                  <p className={`mt-1 font-medium ${selectedJob.paymentStatus === 'Due' ? 'text-red-400' : selectedJob.paymentStatus === 'Paid' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {selectedJob.paymentStatus}
+                  <p className={`mt-1 font-medium ${selectedJob.escrowStatus === 'LOCKED' ? 'text-red-400' : selectedJob.escrowStatus === 'RELEASED' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {selectedJob.escrowStatus}
                   </p>
                 </div>
               </div>
 
-              {selectedJob.status === 'Finished' && selectedJob.paymentStatus === 'Due' && (
+              {selectedJob.status === 'SUBMITTED' && selectedJob.escrowStatus === 'LOCKED' && (
                 <div className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/5 p-5">
                   <p className="text-xs uppercase tracking-[0.3em] text-red-300">Payment Overdue</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">

@@ -69,8 +69,8 @@ export default function ChallengePage() {
     };
   }, [gradeResult, testActive]);
 
-  const resetTest = async () => {
-    if (document.fullscreenElement && document.exitFullscreen) {
+  const resetTest = async (keepFullscreen = false) => {
+    if (!keepFullscreen && document.fullscreenElement && document.exitFullscreen) {
       try {
         await document.exitFullscreen();
       } catch {
@@ -107,7 +107,7 @@ export default function ChallengePage() {
       return;
     }
 
-    await resetTest();
+    await resetTest(true);
 
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     requestIdRef.current = sessionId;
@@ -316,7 +316,7 @@ export default function ChallengePage() {
                 onClick={resetTest}
                 className="w-full rounded-full border border-slate-400/30 px-6 py-2 text-sm font-medium text-slate-300 hover:border-cyan-400/50 hover:text-cyan-300"
               >
-                Start New Test
+                Go Back to Skills
               </button>
             </div>
           ) : challenge ? (
@@ -417,7 +417,7 @@ export default function ChallengePage() {
             )}
             {challenge && !gradeResult && (
               <button
-                onClick={resetTest}
+                onClick={startTest}
                 className="flex-1 rounded-full border border-white/15 px-6 py-3 font-medium text-slate-300 hover:border-cyan-400/40 hover:text-cyan-300"
               >
                 Reset Test

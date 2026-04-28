@@ -36,7 +36,7 @@ model Job {
   escrowStatus   String?   @default("UNFUNDED") // UNFUNDED, LOCKED, RELEASED, REFUNDED
   escrowTxHash   String?
   escrowId       String?
-  deliverableCid String?
+  submittedWork  String?
   disputeReason  String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
