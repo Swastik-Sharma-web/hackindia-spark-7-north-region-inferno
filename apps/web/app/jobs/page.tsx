@@ -40,6 +40,10 @@ export default function JobsPage() {
     return !isApplied(job);
   };
 
+  const isOwnJob = (job: any) => {
+    return job.client?.wallet === effectiveAddress;
+  };
+
   const handleApply = async (jobId: string | number) => {
     if (!isApplied({ id: jobId })) {
       try {
@@ -100,6 +104,9 @@ export default function JobsPage() {
                   {isApplied(job) && (
                     <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-emerald-300">Applied ✓</span>
                   )}
+                  {isOwnJob(job) && (
+                    <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-3 py-1 text-violet-300">Your Post</span>
+                  )}
                   {isClaimedByOther(job) && (
                     <span className="rounded-full border border-slate-400/30 bg-slate-400/10 px-3 py-1 text-slate-300">Claimed</span>
                   )}
@@ -153,11 +160,11 @@ export default function JobsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => handleApply(selectedJob.id)}
-                disabled={isApplied(selectedJob) || isClaimedByOther(selectedJob) || userScore < parseInt(selectedJob.score)}
+                disabled={isOwnJob(selectedJob) || isApplied(selectedJob) || isClaimedByOther(selectedJob) || userScore < parseInt(selectedJob.score)}
                 className={`flex-1 rounded-full px-6 py-3 font-medium transition-all ${
                   isApplied(selectedJob)
                     ? 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
-                    : isClaimedByOther(selectedJob)
+                    : isOwnJob(selectedJob) || isClaimedByOther(selectedJob)
                     ? 'border border-slate-400/30 bg-slate-400/10 text-slate-300 cursor-not-allowed'
                     : userScore < parseInt(selectedJob.score)
                     ? 'border border-red-400/30 bg-red-400/10 text-red-300 cursor-not-allowed'
@@ -166,6 +173,8 @@ export default function JobsPage() {
               >
                 {isApplied(selectedJob)
                   ? '✓ Applied with Passport'
+                  : isOwnJob(selectedJob)
+                  ? 'You Posted This Job'
                   : isClaimedByOther(selectedJob)
                   ? 'Claimed by Another'
                   : userScore < parseInt(selectedJob.score)
